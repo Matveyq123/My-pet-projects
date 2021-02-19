@@ -1,0 +1,115 @@
+#include <iostream>
+#include<string>
+#include <cmath>
+#include <vector>
+#include <string>
+#include<map>
+#include <set>
+#include <algorithm>
+#include <locale>
+#include<fstream>
+#include<iomanip>
+#include <numeric>
+#include <sstream>
+#include <exception>
+#include<stdexcept>
+
+int GreatestCommonDivisor(int a, int b) {
+    if (b == 0) {
+        return a;
+    }
+    else {
+        return GreatestCommonDivisor(b, a % b);
+    }
+}
+class Rational {
+public:
+Rational() {
+    numerator = 0;
+    denominator = 1;
+}
+Rational(int new_numerator, int new_denominator) {
+    if (new_denominator == 0) {
+        throw std::invalid_argument("");
+    }
+    const int gcd = GreatestCommonDivisor(new_numerator, new_denominator);
+    numerator = new_numerator / gcd;
+    denominator = new_denominator / gcd;
+    if (denominator < 0) {
+        denominator = -denominator;
+        numerator = -numerator;
+    }
+}
+
+int Numerator() const {
+    return numerator;
+}
+
+int Denominator() const {
+    return denominator;
+}
+
+private:
+    int numerator;
+    int denominator;
+};
+std::istream& operator>>(std::istream& stream, Rational& r) {
+    int numerator, denominator;
+    char c;
+    if (stream) {
+        stream >> numerator >> c >> denominator;
+        if (denominator == 0 || c != '/') {
+            throw std::invalid_argument("Invalid argument");
+        }
+        if (stream) {
+            if (c == '/') {
+                r = Rational(numerator, denominator);
+            }
+            else
+            {
+                stream.setstate(std::ios_base::failbit);
+            }
+        }
+    }
+    return stream;
+}
+std::ostream& operator<<(std::ostream& stream, const Rational& r) {
+return stream << r.Numerator() << "/" << r.Denominator();
+}
+Rational operator+(const Rational& l, const Rational& r) {
+    return {
+        l.Numerator() * r.Denominator() + r.Numerator() * l.Denominator(),
+        l.Denominator() * r.Denominator()
+        };
+}
+Rational operator-(const Rational& l, const Rational& r) {
+    return {
+        l.Numerator() * r.Denominator() - r.Numerator() * l.Denominator(),
+        l.Denominator()* r.Denominator()
+    };
+}
+bool operator == (const Rational& l, const Rational& r) {
+    return {
+    l.Numerator() == r.Numerator() &&
+    l.Denominator() == r.Denominator()
+    };
+
+}
+Rational operator * (const Rational& lhs, const Rational& rhs) {
+    return {
+        lhs.Numerator() * rhs.Numerator(),
+        lhs.Denominator() * rhs.Denominator()
+    };
+}
+
+Rational operator / (const Rational& lhs, const Rational& rhs) {
+    // проверяем делитель на 0 (что равносильно проверке на 0 его числителя)
+    if (rhs.Numerator() == 0) {
+        throw std::invalid_argument("Division by zero");
+    }
+    return lhs * Rational(rhs.Denominator(), rhs.Numerator());
+}
+bool operator<(const Rational& l, const Rational& r) {
+    return (l - r).Numerator() < 0;
+}
+
