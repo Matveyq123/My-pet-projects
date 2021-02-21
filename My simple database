@@ -1,0 +1,193 @@
+#include <iostream>
+#include<string>
+#include<map>
+#include<vector>
+#include<set>
+#include<exception>
+#include<algorithm>
+#include<iomanip>
+#include<sstream>
+
+class Date {
+public:
+    Date() {
+        year = 0;
+        month = 0;
+        day = 0;
+    }
+    Date(int new_year, int new_month, int new_day) {
+        if (new_month < 1 || new_month > 12) {
+            throw std::invalid_argument("Month value is invalid: " + std::to_string(new_month));
+        }
+        if (new_day < 1 || new_day > 31) {
+            throw std::invalid_argument("Day value is invalid: " + std::to_string(new_day));
+        }
+        year = new_year;
+        month = new_month;
+        day = new_day;
+    }
+    void Print() const {
+        std::cout << std::setw(2) << std::setfill('0') << year
+            << std::setw(2) << std::setfill('0') << month
+            << std::setw(2) << std::setfill('0') << day; 
+    }
+    int GetYear() const {
+        return year;
+    }
+    int GetMonth() const {
+        return month;
+    }
+    int GetDay() const {
+        return day;
+    }
+    private:
+        int year;
+        int month;
+        int day;
+};
+
+std::ostream& operator<<(std::ostream& stream, const Date& d) {
+
+    return stream << std::setw(4) << std::setfill('0') << d.GetYear() << '-'
+        << std::setw(2) << std::setfill('0') << d.GetMonth() << '-'
+        << std::setw(2) << std::setfill('0') << d.GetDay();
+}
+
+Date CorrectInput(std::string& date_str) {
+    std::stringstream str(date_str);
+    int year, month, day;
+    char first, second;
+    if (str) {
+        str >> year >> first >> month >> second >> day;
+        if (str) {
+            if (first == '-' && second == '-' && str.peek() == EOF) {
+                return Date(year, month, day);
+            }
+            else {
+                throw std::invalid_argument("Wrong date format: " + date_str);
+            }
+        }
+        else {
+            throw std::invalid_argument("Wrong date format: " + date_str);
+        }
+    }
+}
+bool operator<(const Date& lhs, const Date& rhs) {
+    if (lhs.GetYear() == rhs.GetYear()) {
+        if (lhs.GetMonth() == rhs.GetMonth()) {
+            return lhs.GetDay() < rhs.GetDay();
+        }
+        else {
+            return lhs.GetMonth() < rhs.GetMonth();
+        }
+    }
+    else {
+        return lhs.GetYear() < rhs.GetYear();
+    }
+}
+class Database {
+public:
+    void AddEvent(const Date& date, const std::string& event) {
+        data[date].insert(event);
+    }
+    bool DeleteEvent(const Date& date, const std::string& event) {
+        if (data.count(date) >  0 && data[date].count(event) > 0) {
+            data[date].erase(event);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    int  DeleteDate(const Date& date) {
+        int i = 0;
+        if (data.count(date) == 1) {
+            int size = data[date].size();
+            data.erase(date);
+            return size;
+        }
+        else {
+            return 0;
+        }
+
+    }
+void Find(const Date& date) const {
+       if (data.count(date) == 1) {
+           if (date.GetYear() >= 0) {
+               for (const std::string& s : data.at(date)) {
+                       std::cout << s << std::endl;
+               }
+           }
+       }
+}
+
+    void Print() const {
+        for (const auto& item : data) {
+            if (item.first.GetYear() >= 0) {
+                for (const std::string s : item.second) {
+                        std::cout << item.first << " " << s << std::endl;
+                }
+            }
+       }
+    }
+private:
+    std::map<Date, std::set<std::string>> data;
+};
+int main() {
+    Database db;
+    std::string command;
+    try {
+        while (getline(std::cin, command)) {
+            std::stringstream ss(command);
+            std::string str;
+            ss >> str;
+            if (str == "Add") {
+                std::string date_str, event;
+                ss >> date_str >> event;
+                Date date = CorrectInput(date_str);
+                if (!event.empty()) {
+                    db.AddEvent(date, event);
+                }
+            }
+            else if (str == "Del") {
+                std::string date_str, event;
+                ss >> date_str >> event;
+                Date date = CorrectInput(date_str);
+                if (!event.empty()) {
+                    if (db.DeleteEvent(date, event)) {
+                        std::cout << "Deleted successfully" << std::endl;
+                    }
+                    else {
+                        std::cout << "Event not found" << std::endl;
+                    }
+                }
+                else {
+                    int count = db.DeleteDate(date);
+                    std::cout << "Deleted " << count << " events" << std::endl;
+                }
+            
+
+            }
+            else if (str == "Find") {
+                std::string date_str;
+                ss >> date_str;
+                Date date = CorrectInput(date_str);
+                db.Find(date);
+
+            }
+            else if (command == "Print") {
+                db.Print();
+            }
+            else {
+                if (!command.empty()) {
+                    throw std::invalid_argument("Unknown command: " + command);
+                }
+            }
+        }
+    }
+    catch (std::invalid_argument& arg) {
+        std::cout << arg.what() << std::endl;
+    }
+
+    return 0;
+}
