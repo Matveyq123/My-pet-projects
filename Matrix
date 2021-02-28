@@ -1,0 +1,115 @@
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <stdexcept>
+#include <vector>
+
+class Matrix {
+public:
+    explicit Matrix() { // default constructor
+        rows = 0;
+        cols = 0;
+    }
+    Matrix(int num_rows, int num_cols) { // constructor from two integer parameters
+        Reset(num_rows, num_cols);
+    }
+    int GetNumRows() const { // constant method that return the number of rows
+        return rows;
+    }
+    int GetNumColumns() const { // constant method that return the number of columns
+        return cols;
+    }
+    void Reset(int num_rows, int num_cols) { // method that changes the size of the matrix and zeroes all its elements
+        if (num_rows < 0) {
+            throw std::out_of_range("Out of range: " + std::to_string(num_rows));
+        }
+        if (num_cols < 0) {
+            throw std::out_of_range("Out of range: " + std::to_string(num_cols));
+        }
+        if (num_rows == 0 || num_cols == 0) {
+            num_rows = num_cols = 0;
+        }
+        rows = num_rows;
+        cols = num_cols;
+        matrix.assign(num_rows, std::vector<int>(num_cols));
+    }
+    int At(int row_index, int col_index) const { //constant method At that returns the value in the corresponding matrix cell
+        return matrix.at(row_index).at(col_index);
+    }
+    int& At(int row_index, int col_index) { // method At that returns the value in the corresponding matrix cell
+        return matrix.at(row_index).at(col_index);
+    }
+private:
+    int rows;
+    int cols;
+    std::vector<std::vector<int>> matrix;
+};
+
+std::istream& operator>>(std::istream& stream, Matrix& m) {
+    int rows_num, cols_num;
+    if (stream) {
+        stream >> rows_num >> cols_num;
+        if (stream) {
+            m.Reset(rows_num, cols_num);
+            for (int i = 0; i < rows_num; ++i) {
+                for (int j = 0; j < cols_num; ++j) {
+                    stream >> m.At(i, j);
+                }
+            }
+        }
+        return stream;
+    }
+}
+Matrix operator+(const Matrix& rhs, const Matrix& lhs) {
+    if (rhs.GetNumRows() != lhs.GetNumRows() || rhs.GetNumColumns() != lhs.GetNumColumns())
+    {
+        throw std::invalid_argument("Different matrix sizes");
+    }
+    Matrix result(rhs.GetNumRows(), rhs.GetNumColumns());
+    for (int i = 0; i < result.GetNumRows(); ++i) {
+        for (int j = 0; j < result.GetNumColumns(); ++j) {
+            result.At(i, j) = rhs.At(i, j) + lhs.At(i, j);
+        }
+    }
+    return result;
+}
+
+bool operator ==(const Matrix& rhs, const Matrix& lhs) {
+    if (rhs.GetNumRows() != lhs.GetNumRows() || rhs.GetNumColumns() != lhs.GetNumColumns())
+    {
+        return false;
+    }
+    else {
+        for (int i = 0; i < rhs.GetNumRows(); ++i) {
+            for (int j = 0; j < rhs.GetNumColumns(); ++j) {
+                if (rhs.At(i, j) != lhs.At(i, j))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+}
+std::ostream& operator <<(std::ostream& stream, const Matrix& m) {
+    stream << m.GetNumRows() << " " << m.GetNumColumns() << std::endl;
+    for (int i = 0; i < m.GetNumRows(); ++i) {
+        for (int j = 0; j < m.GetNumColumns(); ++j) {
+            if (j > 0) {
+                stream << " ";
+            }
+            stream << m.At(i, j);
+        }
+        stream << std::endl;
+    }
+    return stream;
+}
+
+int main() { // Test function
+    Matrix one;
+    Matrix two;
+
+    std::cin >> one >> two;
+    std::cout << one + two << std::endl;
+    return 0;
+}
